@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Picks - Curated Products</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles to enforce Times New Roman and the requested background */
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            /* Using a gradient that mimics the light-blue watercolor effect from the uploaded image. */
+            background: linear-gradient(135deg, #e0f7fa 0%, #b3e5fc 50%, #4fc3f7 100%);
+            min-height: 100vh;
+        }
+        
+        .product-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hide products that don't match the search */
+        .hidden-product {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header and Search Section -->
+    <header class="text-center mb-8">
+        <h1 class="text-5xl font-bold text-gray-800 tracking-wider mb-6 border-b-4 border-amber-500 inline-block px-4 pb-1">
+            AMAZON PICKS
+        </h1>
+        <p class="text-xl text-gray-600 mb-6">All products in videos</p>
+
+        <!-- Search Bar -->
+        <div class="max-w-xl mx-auto mb-10">
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search product names..." 
+                class="w-full px-6 py-3 border-2 border-gray-300 rounded-full shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-500 text-lg transition duration-150"
+                oninput="filterProducts(this.value)"
+            >
+        </div>
+    </header>
+
+    <!-- Product Grid Container: Uses responsive grid classes:
+         Mobile (default): 2 columns
+         Tablet (sm): 3 columns
+         Small Laptop (md): 4 columns
+         Large Laptop/Desktop (lg/xl): 5 or 6 columns
+    -->
+    <main id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 max-w-6xl mx-auto">
+        <!-- Products will be injected here by JavaScript -->
+    </main>
+
+    <!-- Message for no search results -->
+    <div id="no-results" class="text-center text-xl text-gray-600 mt-10 hidden">
+        No products found matching your search.
+    </div>
+
+    <script>
+        // Array of mock product data based on the reference image
+        const products = [
+            { id: 1, name: "Opera Browser", url: "https://www.opera.com/", imageUrl: "https://placehold.co/400x300/e0e0e0/333?text=Opera+Laptop" },
+            { id: 2, name: "Hypershell X Ultra", url: "https://www.google.com/search?q=Hypershell+X+Ultra", imageUrl: "https://placehold.co/400x300/a8dadc/333?text=Hypershell+X" },
+            { id: 3, name: "Drawing Robot", url: "https://www.google.com/search?q=Drawing+Robot", imageUrl: "https://placehold.co/400x300/f1faee/333?text=Drawing+Robot" },
+            { id: 4, name: "Red Light Hat", url: "https://www.amazon.com/red-light-hat/", imageUrl: "https://placehold.co/400x300/e63946/fff?text=Red+Light+Hat" },
+            { id: 5, name: "Overbed Bedside Table", url: "https://www.amazon.com/overbed-table/", imageUrl: "https://placehold.co/400x300/457b9d/fff?text=Overbed+Table" },
+            { id: 6, name: "Rotating Outlet Extender", url: "https://www.amazon.com/rotating-outlet-extender/", imageUrl: "https://placehold.co/400x300/1d3557/fff?text=Outlet+Extender" },
+            { id: 7, name: "Wood Grain Tape", url: "https://www.amazon.com/wood-grain-tape/", imageUrl: "https://placehold.co/400x300/b8a27d/333?text=Wood+Tape" },
+            { id: 8, name: "Saunabox Portable Infrared Sauna Pulse", url: "https://www.amazon.com/portable-sauna/", imageUrl: "https://placehold.co/400x300/ff7b00/fff?text=Portable+Sauna" },
+            { id: 9, name: "Dog Grooming Vacuum", url: "https://www.amazon.com/dog-grooming-vacuum/", imageUrl: "https://placehold.co/400x300/5a5a5a/fff?text=Dog+Vacuum" },
+            { id: 10, name: "Package Delivery Sign", url: "https://www.amazon.com/delivery-sign/", imageUrl: "https://placehold.co/400x300/cc444b/fff?text=Delivery+Sign" },
+            { id: 11, name: "Clear Shoe Storage", url: "https://www.amazon.com/shoe-storage/", imageUrl: "https://placehold.co/400x300/f8edeb/333?text=Shoe+Storage" },
+            { id: 12, name: "Earth Rated Pee Pads", url: "https://www.amazon.com/pee-pads/", imageUrl: "https://placehold.co/400x300/b5c99a/333?text=Pee+Pads" },
+            { id: 13, name: "Arrow Headband", url: "https://www.amazon.com/arrow-headband/", imageUrl: "https://placehold.co/400x300/9d4edd/fff?text=Arrow+Headband" },
+            { id: 14, name: "Aotos Scooter Luggage", url: "https://www.amazon.com/scooter-luggage/", imageUrl: "https://placehold.co/400x300/6fa8dc/fff?text=Scooter+Luggage" },
+            { id: 15, name: "Aura Triple Monitor", url: "https://www.amazon.com/triple-monitor/", imageUrl: "https://placehold.co/400x300/2a9d8f/fff?text=Triple+Monitor" },
+        ];
+
+        const productGrid = document.getElementById('product-grid');
+        const noResultsMessage = document.getElementById('no-results');
+
+        // Function to open the link when a card is clicked
+        function openLink(url) {
+            window.open(url, '_blank'); // Opens the link in a new tab
+        }
+
+        // Function to render products based on search term
+        function renderProducts(filteredProducts) {
+            // Clear the existing grid content
+            productGrid.innerHTML = '';
+
+            if (filteredProducts.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+            } else {
+                noResultsMessage.classList.add('hidden');
+            }
+
+            filteredProducts.forEach(product => {
+                // Create the card element
+                const card = document.createElement('div');
+                // Use a standard `a` tag wrapping the content for semantic link behavior
+                card.innerHTML = `
+                    <a href="${product.url}" target="_blank" class="product-card block bg-white rounded-xl shadow-lg hover:shadow-xl overflow-hidden h-full">
+                        <div class="relative w-full aspect-square bg-gray-100 flex items-center justify-center">
+                            <!-- Image (Placeholder used as external image URLs are restricted) -->
+                            <img 
+                                src="${product.imageUrl}" 
+                                alt="${product.name}" 
+                                class="object-cover w-full h-full p-0"
+                                onerror="this.onerror=null; this.src='https://placehold.co/400x300/f5f5f5/333?text=Image+Load+Failed'" 
+                            >
+                        </div>
+                        
+                        <!-- Product Name / Description -->
+                        <div class="p-3 text-center">
+                            <p class="text-xs sm:text-sm font-semibold text-gray-700 tracking-wide">${product.name}</p>
+                        </div>
+                    </a>
+                `;
+                
+                // Append the card to the grid
+                productGrid.appendChild(card);
+            });
+        }
+
+        // Search filtering logic
+        function filterProducts(searchTerm) {
+            const lowerCaseSearch = searchTerm.toLowerCase().trim();
+
+            const filtered = products.filter(product => 
+                product.name.toLowerCase().includes(lowerCaseSearch)
+            );
+            
+            renderProducts(filtered);
+        }
+
+        // Initial render of all products on load
+        window.onload = () => {
+            renderProducts(products);
+        };
+
+    </script>
+</body>
+</html>
